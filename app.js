@@ -599,3 +599,17 @@ if ('serviceWorker' in navigator) {
         console.log('✅ Service Worker enregistré:', reg.scope);
     }).catch(err => console.warn('SW non enregistré:', err));
 }
+
+const installBtn = document.getElementById('btn-install-pwa');
+if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+        const banner = document.getElementById('pwa-install-banner');
+        if (banner) banner.style.display = 'none';
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to the install prompt: ${outcome}`);
+            deferredPrompt = null;
+        }
+    });
+}
