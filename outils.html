@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BetTracker Pro - Outils</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon.svg">
+</head>
+<body>
+
+    <header class="glass">
+        <span>BetTracker <b style="color:var(--accent)">PRO</b></span>
+        <div class="theme-toggle" onclick="toggleTheme()">🌓</div>
+    </header>
+
+    <div id="toast-container"></div>
+
+    <div class="container" style="padding-bottom: 20px;">
+        
+        <!-- 1. Couverture -->
+        <div class="card glass">
+            <h3>🛡️ Couverture (Cashout manuel)</h3>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div><small>Mise Initiale (FC)</small><input type="number" id="cov-s1" min="0" oninput="calcTools()"></div>
+                <div><small>Cote Initiale</small><input type="number" id="cov-o1" min="1.01" step="0.01" oninput="calcTools()"></div>
+            </div>
+            <div style="margin-top:10px;"><small>Cote Opposée Actuelle</small><input type="number" id="cov-o2" min="1.01" step="0.01" oninput="calcTools()"></div>
+            
+            <div class="filter-bar" style="margin-top:12px; justify-content: center;">
+                <button type="button" class="filter-btn active" onclick="setToggle('cov-type', 'zero', this); calcTools();">Zéro Perte</button>
+                <button type="button" class="filter-btn" onclick="setToggle('cov-type', 'equal', this); calcTools();">Profit Égal</button>
+            </div>
+            <input type="hidden" id="cov-type" value="zero">
+            
+            <div style="margin-top:15px; text-align:center; padding:12px; background:rgba(120,120,120,0.1); border-radius:10px;">
+                À miser : <strong id="cov-res-stake" style="color:var(--warning); font-size:1.2rem;">0.00 FC</strong><br>
+                Gain net garanti : <span id="cov-res-profit" style="font-weight:bold;">0.00 FC</span>
+            </div>
+        </div>
+
+        <!-- 2. Dutching -->
+        <div class="card glass">
+            <h3>⚖️ Répartition (Dutching)</h3>
+            <div><small>Budget Total (FC)</small><input type="number" id="dut-budget" min="0" oninput="calcTools()"></div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div><small>Cote A</small><input type="number" id="dut-o1" min="1.01" step="0.01" oninput="calcTools()"></div>
+                <div><small>Cote B</small><input type="number" id="dut-o2" min="1.01" step="0.01" oninput="calcTools()"></div>
+            </div>
+            <div style="margin-top:15px; font-size:0.9rem; background:rgba(120,120,120,0.1); padding:10px; border-radius:10px;">
+                <div>Mise sur A : <b id="dut-s1" style="color:var(--accent)">0.00 FC</b></div>
+                <div>Mise sur B : <b id="dut-s2" style="color:var(--info)">0.00 FC</b></div>
+                <div style="margin-top:5px; padding-top:5px; border-top:1px solid var(--glass-border);">Retour total : <b id="dut-ret">0.00 FC</b> <span id="dut-prof"></span></div>
+            </div>
+        </div>
+
+        <!-- 3. Kelly Criterion -->
+        <div class="card glass">
+            <h3>🧠 Critère de Kelly</h3>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div><small>Bankroll (FC)</small><input type="number" id="kel-bk" min="0" oninput="calcTools()"></div>
+                <div><small>Cote du pari</small><input type="number" id="kel-o" min="1.01" step="0.01" oninput="calcTools()"></div>
+            </div>
+            <div style="margin-top:10px;"><small>Votre Probabilité Estimée (%)</small><input type="number" id="kel-p" min="1" max="100" oninput="calcTools()"></div>
+            <div style="margin-top:15px; text-align:center; padding:12px; background:rgba(120,120,120,0.1); border-radius:10px;">
+                Mise conseillée : <strong id="kel-res" style="color:var(--accent); font-size:1.2rem;">0.00 FC</strong> <span id="kel-pct" style="font-size:0.8rem;">(0%)</span>
+            </div>
+        </div>
+
+        <!-- 4. Convertisseur -->
+        <div class="card glass">
+            <h3>🔄 Convertisseur de Cotes</h3>
+            <input type="number" id="conv-o" placeholder="Cote Décimale (ex: 1.80)" min="1.01" step="0.01" oninput="calcTools()">
+            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.9rem;">
+                <span>Probabilité : <b id="conv-p" style="color:var(--info)">0%</b></span>
+                <span>Format US : <b id="conv-us">0</b></span>
+            </div>
+        </div>
+
+        <button class="btn-info" style="margin-top: 10px; margin-bottom: 20px; font-size: 1.1rem;" onclick="openHelpModal()">📖 Explications des Outils</button>
+
+    </div>
+
+    <!-- Modal d'explication (Bottom Sheet) -->
+    <div id="help-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.3s; display: flex; align-items: flex-end;">
+        <div id="help-sheet" class="glass" style="width: 100%; height: 80vh; background: var(--bg-color); border-radius: 25px 25px 0 0; padding: 25px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>📖 Guide des Outils</h2>
+                <button onclick="closeHelpModal()" style="background: var(--danger); width: 40px; height: 40px; border-radius: 50%; margin: 0; display:flex; align-items:center; justify-content:center;">✖</button>
+            </div>
+            
+            <h4 style="color: var(--accent); margin-bottom: 5px;">🛡️ Couverture (Cashout)</h4>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;">Permet de sécuriser un pari en cours. <b>Zéro Perte</b> calcule combien miser sur le résultat adverse pour être remboursé en cas de défaite. <b>Profit Égal</b> répartit le gain pour vous assurer le même bénéfice quelle que soit l'équipe qui gagne.</p>
+
+            <h4 style="color: var(--info); margin-bottom: 5px;">⚖️ Dutching (Répartition)</h4>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;">Vous avez un budget (ex: 1000 FC) et 2 cotes intéressantes. Cet outil vous dit exactement combien placer sur la Cote A et la Cote B pour que le gain total soit le même si l'une des deux passe.</p>
+
+            <h4 style="color: var(--warning); margin-bottom: 5px;">🧠 Critère de Kelly</h4>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;">La formule ultime de gestion de Bankroll. Si le bookmaker donne une cote de 2.00 (50%), mais que votre analyse indique que l'équipe a 60% de chances de gagner, Kelly calcule la mise exacte (en % de votre capital) pour maximiser votre croissance sans vous ruiner.</p>
+
+            <h4 style="color: var(--text-main); margin-bottom: 5px;">🔄 Convertisseur</h4>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">Permet de comprendre la "Probabilité Implicite" d'une cote. Une cote de 2.00 signifie que le bookmaker estime les chances à 50%. Utile pour détecter les "Value Bets".</p>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></span>Accueil</a>
+        <a href="paris.html" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="22" y1="12" x2="18" y2="12"></line><line x1="6" y1="12" x2="2" y2="12"></line><line x1="12" y1="6" x2="12" y2="2"></line><line x1="12" y1="22" x2="12" y2="18"></line></svg></span>Paris</a>
+        <a href="montante.html" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg></span>Montante</a>
+        <a href="transactions.html" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>Flux</a>
+        <a href="outils.html" class="nav-item active"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg></span>Outils</a>
+    </nav>
+
+    <script src="app.js"></script>
+</body>
+</html>
