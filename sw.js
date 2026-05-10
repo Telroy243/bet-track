@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bettracker-pro-v4.0';
+const CACHE_NAME = 'bettracker-pro-v4.1';
 const ASSETS = [
   './',
   './index.html',
